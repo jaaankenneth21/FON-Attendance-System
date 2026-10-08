@@ -1,0 +1,152 @@
+/* =========================================================
+   SIDEBAR LINK AS <a> (react-router NavLink)
+   ========================================================= */
+
+a.sidebar-link {
+  text-decoration: none;
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   REPORT CONTROLS (presets + date range)
+   Styled as a card, matching .stat-card's border/shadow.
+   ========================================================= */
+
+.report-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+
+  margin-bottom: 24px;
+  padding: 16px 20px;
+
+  border: 1px solid #e8e2db;
+  border-radius: 13px;
+
+  background: #ffffff;
+
+  box-shadow: 0 7px 20px rgba(45, 40, 34, 0.04);
+}
+
+.report-presets {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 8px;
+}
+
+.preset-chip {
+  padding: 0.4rem 0.85rem;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+
+  background: #f9fafb;
+
+  color: #4b5563;
+
+  font-size: 0.8rem;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: all 0.15s ease;
+}
+
+.preset-chip:hover {
+  background: #f3f4f6;
+}
+
+.report-date-range {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+
+  gap: 10px;
+}
+
+.date-range-sep {
+  color: #9a9692;
+
+  font-size: 10px;
+}
+
+
+/* =========================================================
+   SECTION BREAKDOWN (horizontal attendance-rate bars)
+   ========================================================= */
+
+.section-breakdown {
+  display: flex;
+  flex-direction: column;
+
+  gap: 16px;
+
+  padding: 20px 24px;
+}
+
+.section-bar-row {
+  display: grid;
+  grid-template-columns: 150px 1fr 44px;
+  align-items: center;
+
+  gap: 14px;
+}
+
+.section-bar-label {
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+}
+
+.section-bar-label small {
+  color: #999e9b;
+
+  font-size: 9px;
+}
+
+.section-bar-track {
+  height: 8px;
+
+  border-radius: 999px;
+
+  background: #f0f0ef;
+
+  overflow: hidden;
+}
+
+.section-bar-fill {
+  height: 100%;
+
+  border-radius: 999px;
+
+  background: linear-gradient(90deg, #27966b, #6fcaa0);
+
+  transition: width 0.3s ease;
+}
+
+.section-bar-value {
+  color: #303734;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  text-align: right;
+}
+
+@media (max-width: 640px) {
+  .section-bar-row {
+    grid-template-columns: 1fr;
+
+    gap: 6px;
+  }
+
+  .section-bar-value {
+    text-align: left;
+  }
+}

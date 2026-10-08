@@ -1,0 +1,445 @@
+/* =========================================================
+   ADMIN LOGIN — COMPLETE DESIGN
+   Colorway: dark = #D470A2 (rose)  |  light = #ffdab9 (peach)
+   ========================================================= */
+
+.admin-login-page {
+  min-height: 100vh;
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 24px;
+
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(212, 112, 162, 0.08),
+      transparent 35%
+    ),
+    #fdf5ee;
+}
+
+
+/* =========================================================
+   LOGIN CARD
+   ========================================================= */
+
+.admin-login-card {
+  width: 100%;
+  max-width: 430px;
+
+  padding: 40px 36px 34px;
+
+  background: #ffffff;
+
+  border: 1px solid #ffe4c9;
+
+  border-radius: 24px;
+
+  box-shadow:
+    0 20px 60px rgba(212, 112, 162, 0.10);
+
+  position: relative;
+}
+
+
+/* small rose line at top */
+
+.admin-login-card::before {
+  content: "";
+
+  position: absolute;
+
+  top: 0;
+  left: 32px;
+  right: 32px;
+
+  height: 4px;
+
+  border-radius: 0 0 10px 10px;
+
+  background: #d470a2;
+}
+
+
+/* =========================================================
+   LOGO
+   ========================================================= */
+
+.admin-login-logo {
+  width: 96px;
+  height: 96px;
+
+  margin: 4px auto 22px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-login-logo img {
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+}
+
+
+/* =========================================================
+   TITLE
+   ========================================================= */
+
+.admin-login-heading {
+  text-align: center;
+
+  margin-bottom: 30px;
+}
+
+.admin-login-heading h1 {
+  margin: 0;
+
+  color: #2b1a20;
+
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  font-size: 30px;
+
+  font-weight: 750;
+
+  line-height: 1.15;
+
+  letter-spacing: -0.5px;
+}
+
+.admin-login-heading p {
+  margin: 9px 0 0;
+
+  color: #8a7671;
+
+  font-size: 14px;
+
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   FORM
+   ========================================================= */
+
+.admin-login-form {
+  width: 100%;
+}
+
+
+/* =========================================================
+   FORM GROUP
+   ========================================================= */
+
+.admin-form-group {
+  width: 100%;
+
+  margin-bottom: 19px;
+
+  text-align: left;
+}
+
+.admin-form-group label {
+  display: block;
+
+  margin-bottom: 8px;
+
+  color: #3a2620;
+
+  font-size: 14px;
+
+  font-weight: 650;
+
+  text-align: left;
+}
+
+
+/* =========================================================
+   INPUT
+   ========================================================= */
+
+.admin-form-group input {
+  display: block;
+
+  width: 100%;
+
+  height: 50px;
+
+  padding: 0 15px;
+
+  border: 1px solid #f0d9c4;
+
+  border-radius: 12px;
+
+  outline: none;
+
+  background: #ffffff;
+
+  color: #2b1a20;
+
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  font-size: 15px;
+
+  text-align: left;
+
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
+}
+
+.admin-form-group input::placeholder {
+  color: #b7a79d;
+}
+
+.admin-form-group input:hover {
+  border-color: #ffdab9;
+}
+
+.admin-form-group input:focus {
+  border-color: #d470a2;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 0 0 4px rgba(212, 112, 162, 0.10);
+}
+
+.admin-form-group input:disabled {
+  background: #fdf5ee;
+
+  cursor: not-allowed;
+}
+
+
+/* =========================================================
+   ERROR
+   ========================================================= */
+
+.admin-login-error {
+  margin: 2px 0 16px;
+
+  padding: 12px 14px;
+
+  border: 1px solid #f1cccc;
+
+  border-radius: 11px;
+
+  background: #fff3f3;
+
+  color: #a12b2b;
+
+  font-size: 13px;
+
+  line-height: 1.4;
+}
+
+
+/* =========================================================
+   SIGN IN
+   ========================================================= */
+
+.admin-sign-in-button {
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  height: 50px;
+
+  margin-top: 7px;
+
+  padding: 0 18px;
+
+  border: none;
+
+  border-radius: 12px;
+
+  background: #d470a2;
+
+  color: #ffffff;
+
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  font-size: 15px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 6px 16px rgba(212, 112, 162, 0.18);
+
+  transition:
+    background 0.15s ease,
+    transform 0.1s ease,
+    box-shadow 0.15s ease;
+}
+
+.admin-sign-in-button:hover {
+  background: #a95a82;
+
+  box-shadow:
+    0 8px 20px rgba(212, 112, 162, 0.23);
+}
+
+.admin-sign-in-button:active {
+  transform: translateY(1px);
+}
+
+.admin-sign-in-button:disabled {
+  opacity: 0.65;
+
+  cursor: not-allowed;
+
+  box-shadow: none;
+}
+
+
+/* =========================================================
+   BACK BUTTON
+   ========================================================= */
+
+.admin-back-button {
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  height: 46px;
+
+  margin-top: 12px;
+
+  padding: 0 16px;
+
+  border: 1px solid #f0d9c4;
+
+  border-radius: 12px;
+
+  background: #ffffff;
+
+  color: #6b564f;
+
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  font-size: 14px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.admin-back-button:hover {
+  background: #fff6ee;
+
+  border-color: #ffdab9;
+
+  color: #d470a2;
+}
+
+.admin-back-button:disabled {
+  opacity: 0.6;
+
+  cursor: not-allowed;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+  .admin-login-page {
+    padding: 16px;
+  }
+
+  .admin-login-card {
+    max-width: 430px;
+
+    padding: 34px 22px 26px;
+
+    border-radius: 20px;
+  }
+
+  .admin-login-card::before {
+    left: 24px;
+    right: 24px;
+  }
+
+  .admin-login-logo {
+    width: 84px;
+    height: 84px;
+
+    margin-bottom: 19px;
+  }
+
+  .admin-login-heading h1 {
+    font-size: 27px;
+  }
+
+  .admin-login-heading {
+    margin-bottom: 26px;
+  }
+
+}
+
+
+/* =========================================================
+   SMALL PHONES
+   ========================================================= */
+
+@media (max-width: 380px) {
+
+  .admin-login-page {
+    padding: 12px;
+  }
+
+  .admin-login-card {
+    padding: 30px 18px 22px;
+  }
+
+  .admin-login-heading h1 {
+    font-size: 25px;
+  }
+
+}

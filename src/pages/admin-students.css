@@ -1,0 +1,262 @@
+/* =========================================================
+   SIDEBAR LINK AS <a> (react-router NavLink)
+   admin-dashboard.css styled .sidebar-link as a <button>;
+   NavLink renders an <a>, so reset anchor defaults here.
+   ========================================================= */
+
+a.sidebar-link {
+  text-decoration: none;
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   PRIMARY BUTTON ("+ Add Student")
+   Mirrors the sidebar's active-link gradient so it reads as
+   the page's one accent action.
+   ========================================================= */
+
+.dashboard-header .primary-button {
+  align-self: flex-start;
+
+  flex: 0 0 auto;
+  width: auto;
+  max-width: max-content;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 6px;
+
+  min-height: 36px;
+
+  padding: 9px 15px;
+
+  border: 1px solid rgba(255, 180, 140, 0.3);
+  border-radius: 8px;
+
+  background: linear-gradient(135deg, #ffbf9b 0%, #ffc99e 100%);
+
+  color: #ffffff;
+
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+
+  cursor: pointer;
+
+  box-shadow: 0 5px 14px rgba(255, 177, 128, 0.16);
+
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.primary-button:hover {
+  box-shadow: 0 8px 20px rgba(255, 177, 128, 0.24);
+}
+
+.primary-button:active {
+  transform: translateY(1px);
+}
+
+
+/* =========================================================
+   FILTER SELECT (year / section dropdowns)
+   Sized to match .search-box / .date-box
+   ========================================================= */
+
+.filter-select {
+  height: 36px;
+
+  min-width: 150px;
+
+  padding: 0 10px;
+
+  border: 1px solid #e4ded7;
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #515956;
+
+  font-size: 10px;
+  font-weight: 500;
+
+  cursor: pointer;
+
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.filter-select:focus-visible {
+  outline: none;
+
+  border-color: #f2b18a;
+  box-shadow: 0 0 0 3px rgba(255, 177, 138, 0.12);
+}
+
+
+/* =========================================================
+   ROW ACTIONS (Edit / Delete) — sized like .selfie-button
+   ========================================================= */
+
+.col-actions {
+  width: 150px;
+}
+
+.row-actions {
+  display: flex;
+  align-items: center;
+
+  gap: 6px;
+
+  white-space: nowrap;
+}
+
+.row-action-button {
+  min-width: 48px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 7px 9px;
+
+  border: 1px solid #e3ddd5;
+  border-radius: 7px;
+
+  background: #ffffff;
+
+  color: #505a56;
+
+  font-size: 9px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.row-action-button:hover {
+  background: #fffaf6;
+  border-color: #d5cec5;
+  color: #343c38;
+}
+
+.row-action-button:active {
+  transform: translateY(1px);
+}
+
+.row-action-button.danger {
+  color: #9b3939;
+  border-color: #f0cccc;
+}
+
+.row-action-button.danger:hover {
+  background: #fff4f4;
+  border-color: #e5bbbb;
+}
+
+
+/* =========================================================
+   FORM MODAL (Add / Edit Student)
+   Reuses .reset-modal / .reset-modal-overlay chrome from
+   admin-dashboard.css, extended with real form fields.
+   ========================================================= */
+
+.form-modal {
+  text-align: left;
+  max-width: 420px;
+}
+
+.form-modal h3 {
+  margin: 0 0 1.1rem;
+
+  color: #171a19;
+  font-size: 1.05rem;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+
+  gap: 6px;
+
+  margin-bottom: 14px;
+}
+
+.form-field label {
+  color: #59615d;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  letter-spacing: 0.02em;
+}
+
+.form-field input {
+  height: 36px;
+
+  padding: 0 11px;
+
+  border: 1px solid #e4ded7;
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #303734;
+
+  font-size: 11px;
+
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-field input:focus-visible {
+  outline: none;
+
+  border-color: #f2b18a;
+  box-shadow: 0 0 0 3px rgba(255, 177, 138, 0.12);
+}
+
+.form-field input::placeholder {
+  color: #aaa5a0;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+
+  gap: 12px;
+}
+
+.form-error {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+
+  border: 1px solid #f0cccc;
+  border-radius: 8px;
+
+  background: #fff4f4;
+
+  color: #9b3939;
+
+  font-size: 11px;
+}
+
+.reset-modal-icon.danger {
+  background: #fff4f4;
+  color: #9b3939;
+}
+
+.reset-modal-confirm.danger {
+  background: #9b3939;
+}
+
+.reset-modal-confirm.danger:hover {
+  background: #832f2f;
+}
+
+@media (max-width: 520px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,1004 @@
+* {
+  box-sizing: border-box;
+}
+
+.dual-logos {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+.dual-logos img {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+body {
+  margin: 0;
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  background: #fdf3ea;
+  color: #17201d;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.attendance-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ========================================
+   HEADER
+   ======================================== */
+
+.attendance-header {
+  background: #ffffff;
+  border-bottom: 1px solid #f4e2d0;
+  padding: 18px 20px;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.school-logo {
+  width: 44px;
+  height: 44px;
+
+  border-radius: 12px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #ffa6c9;
+  color: white;
+
+  font-weight: 700;
+  font-size: 20px;
+
+  overflow: hidden;
+}
+
+.school-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.attendance-header h1 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.attendance-header p {
+  margin: 3px 0 0;
+  color: #6b7772;
+  font-size: 13px;
+}
+
+/* ========================================
+   MAIN CONTAINER
+   ======================================== */
+
+.attendance-container {
+  width: 100%;
+  max-width: 520px;
+
+  margin: auto;
+  padding: 24px 16px;
+}
+
+/* ========================================
+   ATTENDANCE CARD
+   ======================================== */
+
+.attendance-card {
+  background: white;
+  border-radius: 20px;
+  padding: 28px 22px;
+
+  box-shadow:
+    0 8px 30px rgba(20, 40, 30, 0.07);
+
+  border: 1px solid #f4e2d0;
+
+  /*
+   * Important for keeping camera/photo
+   * inside the card.
+   */
+  overflow: hidden;
+}
+
+/* ========================================
+   CARD ICON / PHOTO
+   ======================================== */
+
+.card-icon {
+  width: 64px;
+  height: 64px;
+
+  margin: 0 auto 16px;
+
+  border-radius: 50%;
+
+  overflow: hidden;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #ffcca1;
+}
+
+.card-icon img {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: cover;
+
+  border-radius: 50%;
+}
+
+/* ========================================
+   OTHER ICONS
+   ======================================== */
+
+.success-icon,
+.time-display,
+.completed-icon {
+  width: 64px;
+  height: 64px;
+
+  margin: 0 auto 16px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+}
+
+.success-icon img,
+.time-display img,
+.completed-icon img {
+  width: 64px;
+  height: 64px;
+
+  display: block;
+  object-fit: contain;
+
+  margin: 0;
+  padding: 0;
+}
+
+/* Check image used inside success/status icons */
+.success-icon img,
+.time-display img,
+.completed-icon img {
+  width: 55px;
+  height: 55px;
+  object-fit: contain;
+  display: block;
+}
+
+/* ========================================
+   CARD TITLE
+   ======================================== */
+
+.attendance-card h2 {
+  text-align: center;
+  margin: 0;
+  font-size: 24px;
+}
+
+.instruction {
+  text-align: center;
+  color: #68736f;
+  margin: 8px 0 24px;
+}
+
+/* ========================================
+   FORM
+   ======================================== */
+
+.attendance-card label {
+  display: block;
+  margin-bottom: 7px;
+
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.attendance-card input {
+  width: 100%;
+
+  padding: 15px;
+
+  border: 1px solid #f4e2d0;
+  border-radius: 12px;
+
+  outline: none;
+
+  font-size: 16px;
+}
+
+.attendance-card input:focus {
+  border-color: #ffa6c9;
+
+  box-shadow:
+    0 0 0 3px rgba(255, 166, 201, 0.2);
+}
+
+/* ========================================
+   PRIMARY BUTTON
+   ======================================== */
+
+.primary-button {
+  width: 100%;
+
+  margin-top: 16px;
+
+  padding: 15px;
+
+  border: none;
+  border-radius: 12px;
+
+  background: #ffa6c9;
+  color: white;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    transform 0.1s ease,
+    opacity 0.15s ease;
+}
+
+.primary-button:hover {
+  background: #ff8ab3;
+}
+
+.primary-button:active {
+  transform: scale(0.99);
+}
+
+.primary-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ========================================
+   STUDENT INFORMATION
+   ======================================== */
+
+.student-information {
+  margin-top: 24px;
+
+  border: 1px solid #f4e2d0;
+  border-radius: 14px;
+
+  overflow: hidden;
+}
+
+.student-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+
+  padding: 14px 15px;
+
+  border-bottom: 1px solid #f4e2d0;
+}
+
+.student-row:last-child {
+  border-bottom: none;
+}
+
+.student-row span {
+  color: #737e79;
+  font-size: 14px;
+}
+
+.student-row strong {
+  text-align: right;
+  font-size: 14px;
+}
+
+/* ========================================
+   ATTENDANCE ACTION
+   ======================================== */
+
+.attendance-action {
+  margin-top: 24px;
+
+  padding: 22px;
+
+  text-align: center;
+
+  background: #fdf3ea;
+
+  border-radius: 16px;
+
+  width: 100%;
+  max-width: 100%;
+
+  overflow: hidden;
+}
+
+.attendance-action h3 {
+  margin: 0 0 6px;
+
+  font-size: 20px;
+}
+
+.attendance-action p {
+  margin: 6px 0;
+
+  color: #69756f;
+
+  line-height: 1.5;
+}
+
+/* ========================================
+   CAMERA PLACEHOLDER
+   ======================================== */
+
+.camera-placeholder {
+  width: 70px;
+  height: 70px;
+
+  margin: 0 auto 14px;
+
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #ffcca1;
+
+  font-size: 30px;
+}
+
+/*
+ * Larger placeholder used when the camera
+ * is not open yet.
+ */
+
+.attendance-card .camera-placeholder {
+  width: 100%;
+  max-width: 320px;
+
+  height: 240px;
+
+  margin: 20px auto;
+
+  border-radius: 16px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  background: #fdf3ea;
+
+  font-size: 56px;
+}
+
+/* ========================================
+   COMPLETED ATTENDANCE
+   ======================================== */
+
+.completed {
+  background: #eef9f2;
+}
+
+.success-text {
+  color: #197245 !important;
+
+  font-weight: 600;
+}
+
+/* ========================================
+   MESSAGE
+   ======================================== */
+
+.message {
+  margin-top: 18px;
+
+  padding: 13px;
+
+  border-radius: 10px;
+
+  text-align: center;
+
+  font-size: 14px;
+
+  line-height: 1.5;
+}
+
+.message.info {
+  background: #eef4ff;
+  color: #28568c;
+}
+
+.message.error {
+  background: #fff0f0;
+  color: #a12b2b;
+}
+
+.message.success {
+  background: #eef9f2;
+  color: #197245;
+}
+
+/* ========================================
+   SECONDARY BUTTON
+   ======================================== */
+
+.secondary-button {
+  width: 100%;
+
+  margin-top: 18px;
+
+  padding: 13px;
+
+  border: 1px solid #f4e2d0;
+
+  border-radius: 12px;
+
+  background: white;
+
+  color: #17201d;
+
+  cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.secondary-button:hover {
+  background: #fdf3ea;
+
+  border-color: #ffcca1;
+}
+
+.secondary-button:disabled {
+  opacity: 0.6;
+
+  cursor: not-allowed;
+}
+
+/* ========================================
+   CAMERA / SELFIE
+   ======================================== */
+
+/* ----------------------------------------
+   CAMERA CONTAINER
+   ---------------------------------------- */
+
+.attendance-card .camera-container,
+.attendance-card .photo-preview-container {
+  width: 100%;
+
+  max-width: 400px;
+
+  margin: 20px auto 0;
+
+  padding: 0;
+
+  overflow: hidden;
+}
+
+/* ----------------------------------------
+   LIVE CAMERA
+   ---------------------------------------- */
+
+.attendance-card video.camera-preview {
+  display: block;
+
+  width: 100% !important;
+
+  max-width: 400px !important;
+
+  min-width: 0 !important;
+
+  height: 300px !important;
+
+  max-height: 300px !important;
+
+  margin: 0 auto !important;
+
+  padding: 0 !important;
+
+  border: 0;
+
+  border-radius: 16px;
+
+  background: #111;
+
+  object-fit: cover;
+
+  overflow: hidden;
+}
+
+/* ----------------------------------------
+   CAPTURED PHOTO
+   ---------------------------------------- */
+
+.attendance-card img.photo-preview {
+  display: block;
+
+  width: 100% !important;
+
+  max-width: 400px !important;
+
+  min-width: 0 !important;
+
+  height: 300px !important;
+
+  max-height: 300px !important;
+
+  margin: 0 auto !important;
+
+  padding: 0 !important;
+
+  border: 0;
+
+  border-radius: 16px;
+
+  background: #111;
+
+  object-fit: cover;
+
+  overflow: hidden;
+}
+
+/* ----------------------------------------
+   CAMERA CONTROLS
+   ---------------------------------------- */
+
+.attendance-card .camera-controls {
+  width: 100%;
+
+  max-width: 400px;
+
+  display: grid;
+
+  grid-template-columns: 1fr 1fr;
+
+  gap: 12px;
+
+  margin: 16px auto 0;
+}
+
+/* ----------------------------------------
+   CAMERA BUTTONS
+   ---------------------------------------- */
+
+.attendance-card .camera-controls .primary-button,
+.attendance-card .camera-controls .secondary-button {
+  width: 100% !important;
+
+  min-width: 0 !important;
+
+  max-width: none;
+
+  margin: 0 !important;
+
+  padding: 14px 10px;
+
+  white-space: normal;
+
+  text-align: center;
+
+  line-height: 1.3;
+}
+
+/* ----------------------------------------
+   CAPTURE BUTTON
+   ---------------------------------------- */
+
+.attendance-card .capture-button {
+  width: 100% !important;
+
+  min-width: 0 !important;
+}
+
+/* ----------------------------------------
+   PHOTO CONFIRMATION TEXT
+   ---------------------------------------- */
+
+.attendance-card
+  .photo-preview-container
+  > p {
+  width: 100%;
+
+  max-width: 400px;
+
+  margin: 14px auto 0;
+
+  text-align: center;
+
+  line-height: 1.5;
+}
+
+/* ========================================
+   TIME OUT CAMERA
+   ======================================== */
+
+/*
+ * The Time Out button can have a longer
+ * label, so make sure it doesn't overflow.
+ */
+
+.attendance-action .primary-button {
+  white-space: normal;
+
+  line-height: 1.3;
+}
+
+/*
+ * Time Out confirmation section
+ * stays visually consistent with Time In.
+ */
+
+.attendance-action .photo-preview-container {
+  margin-top: 18px;
+}
+
+/* ========================================
+   FOOTER
+   ======================================== */
+
+footer {
+  text-align: center;
+
+  padding: 18px;
+
+  color: #7a8580;
+
+  font-size: 12px;
+}
+
+/* ========================================
+   TABLET / PHONE
+   ======================================== */
+
+@media (max-width: 600px) {
+
+  .attendance-container {
+    padding: 16px 12px;
+  }
+
+  .attendance-card {
+    padding: 24px 18px;
+
+    border-radius: 18px;
+  }
+
+  .attendance-card .camera-container,
+  .attendance-card .photo-preview-container {
+    width: 100%;
+
+    max-width: 100%;
+
+    margin-top: 18px;
+  }
+
+  /* --------------------------------------
+     FLUID CAMERA
+     -------------------------------------- */
+
+  .attendance-card video.camera-preview,
+  .attendance-card img.photo-preview {
+    width: 100% !important;
+
+    max-width: 100% !important;
+
+    height: auto !important;
+
+    max-height: none !important;
+
+    aspect-ratio: 4 / 3;
+
+    object-fit: cover;
+
+    border-radius: 14px;
+  }
+
+  /* --------------------------------------
+     CAMERA CONTROLS
+     -------------------------------------- */
+
+  .attendance-card .camera-controls {
+    width: 100%;
+
+    max-width: 100%;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 10px;
+  }
+
+  .attendance-card
+    .camera-controls
+    .primary-button,
+  .attendance-card
+    .camera-controls
+    .secondary-button {
+
+    padding: 13px 8px;
+
+    font-size: 14px;
+
+    min-height: 46px;
+  }
+
+  /* --------------------------------------
+     TIME OUT BUTTON
+     -------------------------------------- */
+
+  .attendance-action
+    > .primary-button {
+
+    font-size: 15px;
+
+    padding: 14px 12px;
+  }
+
+  /* --------------------------------------
+     CARD PHOTO
+     -------------------------------------- */
+
+  .card-icon {
+    width: 64px;
+    height: 64px;
+
+    margin-bottom: 16px;
+
+    border-radius: 50%;
+
+    overflow: hidden;
+  }
+
+  .card-icon img {
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+
+    border-radius: 50%;
+  }
+
+  .success-icon img,
+  .time-display img,
+  .completed-icon img {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+/* ========================================
+   SMALL PHONE
+   ======================================== */
+
+@media (max-width: 480px) {
+
+  .attendance-header {
+    padding: 15px 14px;
+  }
+
+  .attendance-header h1 {
+    font-size: 18px;
+  }
+
+  .attendance-header p {
+    font-size: 12px;
+  }
+
+  .school-logo {
+    width: 40px;
+    height: 40px;
+
+    border-radius: 10px;
+
+    font-size: 18px;
+  }
+
+  .attendance-container {
+    padding: 14px 10px;
+  }
+
+  .attendance-card {
+    padding: 22px 16px;
+
+    border-radius: 16px;
+  }
+
+  .attendance-card h2 {
+    font-size: 22px;
+  }
+
+  .attendance-action {
+    padding: 18px 14px;
+  }
+
+  .attendance-card
+    .camera-placeholder {
+    height: 210px;
+
+    max-width: 100%;
+
+    margin: 18px auto;
+  }
+
+  .dual-logos {
+    gap: 18px;
+    margin-bottom: 16px;
+  }
+
+  .dual-logos img {
+    width: 76px;
+    height: 76px;
+  }
+
+  /* --------------------------------------
+     CARD PHOTO
+     -------------------------------------- */
+
+  .card-icon {
+    width: 64px;
+    height: 64px;
+
+    margin-bottom: 14px;
+  }
+
+  .card-icon img {
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+  }
+}
+
+/* ========================================
+   VERY SMALL PHONE
+   ======================================== */
+
+@media (max-width: 400px) {
+
+  .attendance-card {
+    padding: 20px 14px;
+  }
+
+  .attendance-action {
+    padding: 16px 12px;
+  }
+
+  .attendance-card .camera-controls {
+    gap: 8px;
+  }
+
+  .attendance-card
+    .camera-controls
+    .primary-button,
+  .attendance-card
+    .camera-controls
+    .secondary-button {
+
+    padding: 12px 6px;
+
+    font-size: 13px;
+  }
+
+  .attendance-action
+    > .primary-button {
+
+    font-size: 14px;
+
+    padding: 13px 10px;
+  }
+
+  .dual-logos img {
+    width: 64px;
+    height: 64px;
+  }
+
+  /* --------------------------------------
+     CARD PHOTO
+     -------------------------------------- */
+
+  .card-icon {
+    width: 60px;
+    height: 60px;
+  }
+
+  .card-icon img {
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+  }
+}
+
+/* ========================================
+   EXTREMELY SMALL PHONE
+   ======================================== */
+
+@media (max-width: 330px) {
+
+  .attendance-card .camera-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .attendance-card
+    .camera-controls
+    .primary-button,
+  .attendance-card
+    .camera-controls
+    .secondary-button {
+
+    width: 100%;
+  }
+
+  .attendance-header {
+    gap: 8px;
+  }
+
+  .school-logo {
+    width: 36px;
+    height: 36px;
+
+    font-size: 16px;
+  }
+
+  .attendance-header h1 {
+    font-size: 16px;
+  }
+
+  .dual-logos img {
+    width: 56px;
+    height: 56px;
+  }
+
+  /* --------------------------------------
+     CARD PHOTO
+     -------------------------------------- */
+
+  .card-icon {
+    width: 56px;
+    height: 56px;
+  }
+
+  .card-icon img {
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+  }
+}
