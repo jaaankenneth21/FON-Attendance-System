@@ -1,11 +1,244 @@
 import { useRef, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 import { supabase } from "../lib/supabase";
 
 import logoLeft from "../assets/logo-left.png";
 import logoRight from "../assets/logo-right.png";
 import cardPhoto from "../assets/card-photo.png";
 import checkPhoto from "../assets/check.png";
+
+// --------------------------------------------------
+// FACE CHECK (runs on the student's device)
+// FACE_CHECK_REQUIRED = false turns the check off completely.
+// ALLOW_WITHOUT_FACE_CHECK = true lets a student still take a
+// selfie when the check cannot load on their device (very old
+// phone, blocked network). Those photos are saved with
+// "-unchecked" in the file name. Set it to false to be strict.
+// --------------------------------------------------
+
+const FACE_CHECK_REQUIRED = true;
+const ALLOW_WITHOUT_FACE_CHECK = true;
+
+// Tried in order. Your own files (public/mediapipe/...) come first so
+// mobile data and school Wi-Fi don't depend on other websites; the online
+// copies are the backup when those files are not there.
+const FACE_SOURCES = [
+  {
+    wasm: `${import.meta.env.BASE_URL}mediapipe/wasm`,
+    model: `${import.meta.env.BASE_URL}mediapipe/face_landmarker.task`,
+  },
+  {
+    wasm: "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm",
+    model:
+      "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
+  },
+];
+
+// Loaded once, then reused every time the camera opens
+let faceLandmarkerPromise = null;
+
+function loadFaceLandmarker() {
+  if (!faceLandmarkerPromise) {
+    async function createFromSource(source) {
+      const vision = await FilesetResolver.forVisionTasks(source.wasm);
+
+      const buildOptions = (delegate) => ({
+        baseOptions: { modelAssetPath: source.model, delegate },
+        runningMode: "VIDEO",
+        numFaces: 2,
+        minFaceDetectionConfidence: 0.6,
+        minFacePresenceConfidence: 0.6,
+      });
+
+      try {
+        return await FaceLandmarker.createFromOptions(
+          vision,
+          buildOptions("GPU")
+        );
+      } catch {
+        return await FaceLandmarker.createFromOptions(
+          vision,
+          buildOptions("CPU")
+        );
+      }
+    }
+
+    faceLandmarkerPromise = (async () => {
+      let lastError;
+
+      for (const source of FACE_SOURCES) {
+        try {
+          return await createFromSource(source);
+        } catch (error) {
+          console.warn("Face check source failed:", source.model, error);
+          lastError = error;
+        }
+      }
+
+      throw lastError;
+    })().catch((error) => {
+      faceLandmarkerPromise = null;
+      throw error;
+    });
+  }
+
+  return faceLandmarkerPromise;
+}
+
+// Eye corners, nose tip, mouth corners and lips
+const FACE_FEATURE_POINTS = [33, 133, 263, 362, 1, 61, 291, 13, 14];
+
+// Returns { ok, text } for the current video frame
+function checkFace(landmarker, video) {
+  if (!video || video.readyState < 2 || !video.videoWidth) {
+    return { ok: false, text: "Starting camera..." };
+  }
+
+  const result = landmarker.detectForVideo(video, performance.now());
+  const faces = result?.faceLandmarks || [];
+
+  if (faces.length === 0) {
+    return { ok: false, text: "No face detected. Face the camera." };
+  }
+
+  if (faces.length > 1) {
+    return { ok: false, text: "Only one face is allowed in the photo." };
+  }
+
+  const points = faces[0];
+
+  // Eyes, nose and mouth must all be visible inside the frame
+  const featuresVisible = FACE_FEATURE_POINTS.every((index) => {
+    const point = points[index];
+
+    return (
+      point && point.x > 0.02 && point.x < 0.98 && point.y > 0.02 && point.y < 0.98
+    );
+  });
+
+  if (!featuresVisible) {
+    return { ok: false, text: "Keep your whole face inside the frame." };
+  }
+
+  const xs = points.map((point) => point.x);
+  const ys = points.map((point) => point.y);
+
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+
+  const faceHeight = maxY - minY;
+
+  if (faceHeight < 0.3) {
+    return { ok: false, text: "Move a little closer to the camera." };
+  }
+
+  if (faceHeight > 0.95) {
+    return { ok: false, text: "Move a little farther from the camera." };
+  }
+
+  const centerX = (minX + maxX) / 2;
+  const centerY = (minY + maxY) / 2;
+
+  if (centerX < 0.3 || centerX > 0.7 || centerY < 0.25 || centerY > 0.75) {
+    return { ok: false, text: "Center your face in the frame." };
+  }
+
+  // Nose position between the left and right cheek = facing the camera
+  const leftCheek = points[234];
+  const rightCheek = points[454];
+  const nose = points[1];
+
+  const turn = (nose.x - leftCheek.x) / (rightCheek.x - leftCheek.x);
+
+  if (turn < 0.3 || turn > 0.7) {
+    return { ok: false, text: "Look straight at the camera." };
+  }
+
+  return { ok: true, text: "Face detected. Hold still and capture." };
+}
+
+// --------------------------------------------------
+// CONNECTION HELPERS
+// Weak signal, mobile data and slow Wi-Fi: every request
+// has a time limit and is retried before showing an error.
+// --------------------------------------------------
+
+const NETWORK_MESSAGE =
+  "Weak or no internet connection. Check your signal, or switch between Wi-Fi and mobile data, then try again.";
+
+const NETWORK_RECORD_MESSAGE =
+  "Your connection is weak, so we couldn't confirm your attendance. Check your signal, then tap Confirm again.";
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isNetworkError(error) {
+  const text = `${error?.name || ""} ${error?.message || ""}`.toLowerCase();
+
+  return (
+    text.includes("failed to fetch") ||
+    text.includes("load failed") ||
+    text.includes("networkerror") ||
+    text.includes("network request failed") ||
+    text.includes("network") ||
+    text.includes("timed out") ||
+    text.includes("fetch") ||
+    text.includes("abort") ||
+    text.includes("offline")
+  );
+}
+
+function friendlyError(error, fallback) {
+  if (isNetworkError(error)) return NETWORK_MESSAGE;
+
+  return error?.message || fallback;
+}
+
+function timeoutAfter(ms) {
+  return new Promise((resolve) =>
+    setTimeout(
+      () => resolve({ data: null, error: { message: "Request timed out" } }),
+      ms
+    )
+  );
+}
+
+// run() must return a Supabase-style { data, error } result
+async function withRetry(run, { tries = 3, timeout = 15000 } = {}) {
+  let last = { data: null, error: { message: "Request failed" } };
+
+  for (let attempt = 1; attempt <= tries; attempt += 1) {
+    try {
+      const result = await Promise.race([run(), timeoutAfter(timeout)]);
+
+      if (!result?.error || !isNetworkError(result.error)) return result;
+
+      last = result;
+    } catch (error) {
+      if (!isNetworkError(error)) throw error;
+
+      last = { data: null, error };
+    }
+
+    if (attempt < tries) await sleep(700 * attempt);
+  }
+
+  return last;
+}
+
+// Facebook, Messenger, Instagram, TikTok, Line... in-app browsers
+// often block the camera. Safari / Chrome work properly.
+function isInAppBrowser() {
+  if (typeof navigator === "undefined") return false;
+
+  return /FBAN|FBAV|FB_IAB|FBIOS|Instagram|Messenger|Line\/|TikTok|musical_ly|Snapchat|MicroMessenger/i.test(
+    navigator.userAgent
+  );
+}
 
 // --------------------------------------------------
 // PRIVACY NOTICE (shown once per device)
@@ -152,10 +385,11 @@ function PrivacyNotice({ consentGiven, agreed, onAgreeChange, onAccept, onClose 
 
           <h4 style={noticeStyles.heading}>Camera and device storage</h4>
           <p style={noticeStyles.paragraph}>
-            The camera is used only when you tap “Take Selfie”. When you accept
-            this notice, a small note is saved in your browser so you are not
-            asked again on this device. This system does not use cookies for
-            advertising or tracking.
+            The camera is used only when you tap “Take Selfie”. Your selfie is
+            checked on your own device to confirm that a face is visible; no
+            face data is stored. When you accept this notice, a small note is
+            saved in your browser so you are not asked again on this device.
+            This system does not use cookies for advertising or tracking.
           </p>
 
           <h4 style={noticeStyles.heading}>Your rights</h4>
@@ -259,6 +493,21 @@ function AttendancePage() {
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraLoading, setCameraLoading] = useState(false);
 
+  // Face check
+  const faceLandmarkerRef = useRef(null);
+  const [faceStatus, setFaceStatus] = useState({
+    state: "loading",
+    text: "Loading face check...",
+  });
+
+  // Connection
+  const [online, setOnline] = useState(
+    typeof navigator === "undefined" ? true : navigator.onLine
+  );
+  const [programError, setProgramError] = useState(false);
+  const [inAppBrowser] = useState(isInAppBrowser);
+  const [linkCopied, setLinkCopied] = useState(false);
+
   // Captured selfie (before confirming)
   const [photo, setPhoto] = useState(null);
 
@@ -305,6 +554,38 @@ function AttendancePage() {
   }, [noticeOpen]);
 
   // --------------------------------------------------
+  // ONLINE / OFFLINE
+  // --------------------------------------------------
+
+  useEffect(() => {
+    function goOnline() {
+      setOnline(true);
+      loadProgram();
+    }
+
+    function goOffline() {
+      setOnline(false);
+    }
+
+    window.addEventListener("online", goOnline);
+    window.addEventListener("offline", goOffline);
+
+    return () => {
+      window.removeEventListener("online", goOnline);
+      window.removeEventListener("offline", goOffline);
+    };
+  }, []);
+
+  async function copyPageLink() {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setLinkCopied(true);
+    } catch {
+      window.prompt("Copy this link and open it in Safari or Chrome:", window.location.href);
+    }
+  }
+
+  // --------------------------------------------------
   // MESSAGE
   // --------------------------------------------------
 
@@ -318,7 +599,8 @@ function AttendancePage() {
   // --------------------------------------------------
 
   async function findStudent() {
-    const id = studentId.trim();
+    // Usernames are stored in capitals; phones often type lowercase
+    const id = studentId.replace(/\s+/g, "").toUpperCase();
 
     if (!id) {
       showMessage("Please enter your Attendance username.", "error");
@@ -333,9 +615,8 @@ function AttendancePage() {
     setMessageType("");
 
     try {
-      const { data: studentData, error: studentError } = await supabase.rpc(
-        "find_student",
-        { p_student_id: id }
+      const { data: studentData, error: studentError } = await withRetry(() =>
+        supabase.rpc("find_student", { p_student_id: id })
       );
 
       if (studentError) throw studentError;
@@ -349,14 +630,16 @@ function AttendancePage() {
       setStudent(studentData);
 
       const { data: attendanceData, error: attendanceError } =
-        await supabase.rpc("get_today_attendance", { p_student_id: id });
+        await withRetry(() =>
+          supabase.rpc("get_today_attendance", { p_student_id: id })
+        );
 
       if (attendanceError) throw attendanceError;
 
       setTodayAttendance(attendanceData);
     } catch (error) {
       console.error("Find student error:", error);
-      showMessage(error.message || "Unable to find student.", "error");
+      showMessage(friendlyError(error, "Unable to find student."), "error");
     } finally {
       setLoading(false);
     }
@@ -393,7 +676,12 @@ function AttendancePage() {
 
   async function openCamera(mode = "time_in") {
     if (!navigator.mediaDevices?.getUserMedia) {
-      showMessage("Your browser does not support camera access.", "error");
+      showMessage(
+        inAppBrowser
+          ? "This in-app browser blocks the camera. Open this page in Safari or Chrome."
+          : "Your browser does not support camera access.",
+        "error"
+      );
       return;
     }
 
@@ -459,6 +747,101 @@ function AttendancePage() {
   }
 
   // --------------------------------------------------
+  // FACE CHECK: START LOADING EARLY
+  // The model starts downloading as soon as the student is found,
+  // so it is usually ready by the time the camera opens.
+  // --------------------------------------------------
+
+  useEffect(() => {
+    if (student && FACE_CHECK_REQUIRED) {
+      loadFaceLandmarker().catch(() => {});
+    }
+  }, [student]);
+
+  // --------------------------------------------------
+  // FACE CHECK LOOP
+  // Runs while the camera is open and updates the status
+  // shown under the preview. Capture stays disabled until
+  // a single, centered, front-facing face is detected.
+  // --------------------------------------------------
+
+  useEffect(() => {
+    if (!cameraOpen || !FACE_CHECK_REQUIRED) return;
+
+    let cancelled = false;
+    let timer = null;
+
+    function updateStatus(next) {
+      setFaceStatus((previous) =>
+        previous.state === next.state && previous.text === next.text
+          ? previous
+          : next
+      );
+    }
+
+    updateStatus({
+      state: "loading",
+      text: "Loading face check... this can take a moment on mobile data.",
+    });
+
+    // Slow network: after 45 seconds, let the student continue
+    const slowTimer = setTimeout(() => {
+      if (!cancelled && !faceLandmarkerRef.current && ALLOW_WITHOUT_FACE_CHECK) {
+        updateStatus({
+          state: "unavailable",
+          text: "Face check is taking too long. You can still take your selfie.",
+        });
+      }
+    }, 45000);
+
+    loadFaceLandmarker()
+      .then((landmarker) => {
+        if (cancelled) return;
+
+        faceLandmarkerRef.current = landmarker;
+
+        function tick() {
+          try {
+            const result = checkFace(landmarker, videoRef.current);
+
+            updateStatus({
+              state: result.ok ? "ok" : "warn",
+              text: result.text,
+            });
+          } catch (error) {
+            console.error("Face check error:", error);
+          }
+        }
+
+        tick();
+        timer = setInterval(tick, 300);
+      })
+      .catch((error) => {
+        console.error("Face check failed to load:", error);
+
+        if (cancelled) return;
+
+        updateStatus(
+          ALLOW_WITHOUT_FACE_CHECK
+            ? {
+                state: "unavailable",
+                text: "Face check isn't available on this device. You can still take your selfie.",
+              }
+            : {
+                state: "error",
+                text: "Face check could not load. Check your connection, then cancel and reopen the camera.",
+              }
+        );
+      });
+
+    return () => {
+      cancelled = true;
+      clearTimeout(slowTimer);
+      if (timer) clearInterval(timer);
+    };
+  }, [cameraOpen]);
+
+  // --------------------------------------------------
   // CAPTURE PHOTO
   // --------------------------------------------------
 
@@ -473,6 +856,39 @@ function AttendancePage() {
     if (!video.videoWidth || !video.videoHeight) {
       showMessage("Please wait for the camera preview to load.", "error");
       return;
+    }
+
+    // Final face check on the exact frame being captured
+    let unchecked = false;
+
+    if (FACE_CHECK_REQUIRED) {
+      const landmarker = faceLandmarkerRef.current;
+
+      if (!landmarker) {
+        if (ALLOW_WITHOUT_FACE_CHECK && faceStatus.state === "unavailable") {
+          unchecked = true;
+        } else {
+          showMessage("Face check is still loading. Please wait.", "error");
+          return;
+        }
+      } else {
+        let faceResult;
+
+        try {
+          faceResult = checkFace(landmarker, video);
+        } catch (error) {
+          console.error("Face check error:", error);
+          faceResult = {
+            ok: false,
+            text: "Face check failed. Please try again.",
+          };
+        }
+
+        if (!faceResult.ok) {
+          showMessage(faceResult.text, "error");
+          return;
+        }
+      }
     }
 
     const canvas = document.createElement("canvas");
@@ -504,7 +920,9 @@ function AttendancePage() {
 
         if (photo?.url) URL.revokeObjectURL(photo.url);
 
-        setPhoto({ blob, url: photoUrl });
+        setPhoto({ blob, url: photoUrl, unchecked });
+        setMessage("");
+        setMessageType("");
         stopCamera();
       },
       "image/jpeg",
@@ -558,29 +976,44 @@ function AttendancePage() {
 
       const uniqueId = crypto.randomUUID();
       const photoType = cameraMode === "time_out" ? "time-out" : "time-in";
+      const fileTag = photo.unchecked ? `${photoType}-unchecked` : photoType;
 
-      uploadedPhotoPath = `${student.student_id}/${manilaDate}/${photoType}-${uniqueId}.jpg`;
+      uploadedPhotoPath = `${student.student_id}/${manilaDate}/${fileTag}-${uniqueId}.jpg`;
 
-      // Upload selfie
-      const { error: uploadError } = await supabase.storage
-        .from("attendance-photos")
-        .upload(uploadedPhotoPath, photo.blob, {
-          contentType: "image/jpeg",
-          cacheControl: "3600",
-          upsert: false,
-        });
+      // Upload selfie (retried on weak connections)
+      const { error: uploadError } = await withRetry(
+        () =>
+          supabase.storage
+            .from("attendance-photos")
+            .upload(uploadedPhotoPath, photo.blob, {
+              contentType: "image/jpeg",
+              cacheControl: "3600",
+              upsert: false,
+            }),
+        { tries: 3, timeout: 45000 }
+      );
 
-      if (uploadError) throw uploadError;
+      // "Already exists" means an earlier try got through: that's fine
+      if (
+        uploadError &&
+        !/already exists|duplicate/i.test(uploadError.message || "")
+      ) {
+        throw uploadError;
+      }
 
       // Record attendance
       const rpcName =
         cameraMode === "time_out" ? "record_time_out" : "record_time_in";
 
       const { data: attendanceData, error: attendanceError } =
-        await supabase.rpc(rpcName, {
-          p_student_id: student.student_id,
-          p_photo_path: uploadedPhotoPath,
-        });
+        await withRetry(
+          () =>
+            supabase.rpc(rpcName, {
+              p_student_id: student.student_id,
+              p_photo_path: uploadedPhotoPath,
+            }),
+          { tries: 1, timeout: 30000 }
+        );
 
       if (attendanceError) throw attendanceError;
 
@@ -588,9 +1021,13 @@ function AttendancePage() {
 
       // Refresh attendance
       const { data: updatedAttendance, error: refreshError } =
-        await supabase.rpc("get_today_attendance", {
-          p_student_id: student.student_id,
-        });
+        await withRetry(
+          () =>
+            supabase.rpc("get_today_attendance", {
+              p_student_id: student.student_id,
+            }),
+          { tries: 2, timeout: 15000 }
+        );
 
       if (refreshError) {
         console.error("Attendance refresh error:", refreshError);
@@ -620,8 +1057,12 @@ function AttendancePage() {
     } catch (error) {
       console.error("Attendance recording error:", error);
 
-      // Remove the orphaned selfie if the database rejected the record
-      if (uploadedPhotoPath) {
+      const networkProblem = isNetworkError(error);
+
+      // Remove the orphaned selfie if the database rejected the record.
+      // Skipped on connection errors: the record may have gone through,
+      // and deleting its photo would break it.
+      if (uploadedPhotoPath && !networkProblem) {
         const { error: cleanupError } = await supabase.storage
           .from("attendance-photos")
           .remove([uploadedPhotoPath]);
@@ -632,10 +1073,12 @@ function AttendancePage() {
       }
 
       showMessage(
-        error.message ||
-          (cameraMode === "time_out"
-            ? "Unable to record Time Out."
-            : "Unable to record Time In."),
+        networkProblem
+          ? NETWORK_RECORD_MESSAGE
+          : error.message ||
+              (cameraMode === "time_out"
+                ? "Unable to record Time Out."
+                : "Unable to record Time In."),
         "error"
       );
     } finally {
@@ -698,17 +1141,28 @@ function AttendancePage() {
   // --------------------------------------------------
   // NEW: CHECK IF THE ADMIN HAS OPENED A SESSION
   // Re-checks every 20 seconds so the page opens/closes by itself.
+  // A connection failure is NOT shown as "session not open".
   // --------------------------------------------------
 
   async function loadProgram() {
-    const { data, error } = await supabase.rpc("get_open_program");
+    const { data, error } = await withRetry(
+      () => supabase.rpc("get_open_program"),
+      { tries: 2, timeout: 12000 }
+    );
 
     if (error) {
       console.error("Session check error:", error);
+
+      if (isNetworkError(error)) {
+        setProgramError(true);
+        return;
+      }
+
       setProgram((previous) => (previous === undefined ? null : previous));
       return;
     }
 
+    setProgramError(false);
     setProgram(data?.open ? data : null);
   }
 
@@ -719,6 +1173,63 @@ function AttendancePage() {
 
     return () => clearInterval(timer);
   }, []);
+
+  // --------------------------------------------------
+  // CAMERA PANEL (live preview + face status + buttons)
+  // Used by both Time In and Time Out
+  // --------------------------------------------------
+
+  function renderCameraPanel(captureLabel) {
+    const faceReady =
+      !FACE_CHECK_REQUIRED ||
+      faceStatus.state === "ok" ||
+      (ALLOW_WITHOUT_FACE_CHECK && faceStatus.state === "unavailable");
+
+    return (
+      <div className="camera-container">
+        <div className={`camera-frame ${FACE_CHECK_REQUIRED ? faceStatus.state : ""}`}>
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className="camera-preview"
+          />
+
+          {FACE_CHECK_REQUIRED && (
+            <div className="face-guide" aria-hidden="true" />
+          )}
+        </div>
+
+        {FACE_CHECK_REQUIRED && (
+          <div className={`face-status ${faceStatus.state}`} role="status">
+            {faceStatus.text}
+          </div>
+        )}
+
+        <div className="camera-controls">
+          <button
+            className="primary-button capture-button"
+            onClick={capturePhoto}
+            disabled={loading || !faceReady}
+          >
+            {captureLabel}
+          </button>
+
+          <button
+            className="secondary-button"
+            onClick={() => {
+              stopCamera();
+              setCameraMode(null);
+            }}
+            disabled={loading}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // --------------------------------------------------
   // PAGE
@@ -745,15 +1256,50 @@ function AttendancePage() {
       </header>
 
       <main className="attendance-container">
+        {!online && (
+          <div className="notice-banner offline" role="alert">
+            You're offline. Reconnect to Wi-Fi or mobile data to continue.
+          </div>
+        )}
+
+        {inAppBrowser && (
+          <div className="notice-banner">
+            For the camera to work, open this page in Safari or Chrome.{" "}
+            <button type="button" className="link-button" onClick={copyPageLink}>
+              {linkCopied ? "Link copied" : "Copy link"}
+            </button>
+          </div>
+        )}
+
         <div className="dual-logos">
           <img src={logoLeft} alt="Left logo" />
           <img src={logoRight} alt="Right logo" />
         </div>
 
         {/* CHECKING SESSION */}
-        {!student && program === undefined && (
+        {!student && program === undefined && !programError && (
           <section className="attendance-card">
             <h2>Checking attendance session...</h2>
+          </section>
+        )}
+
+        {/* CANNOT REACH THE SERVER */}
+        {!student && program === undefined && programError && (
+          <section className="attendance-card">
+            <div className="card-icon">
+              <img src={cardPhoto} alt="Attendance" />
+            </div>
+
+            <h2>Can't Connect</h2>
+
+            <p className="instruction">
+              We couldn't reach the attendance server. Check your signal, or
+              switch between Wi-Fi and mobile data.
+            </p>
+
+            <button className="primary-button" onClick={loadProgram}>
+              Try again
+            </button>
           </section>
         )}
 
@@ -773,7 +1319,6 @@ function AttendancePage() {
           </section>
         )}
 
-        {/* STUDENT ID */}
         {/* YEAR LEVEL NOT INCLUDED */}
         {!student && program && notAllowed && (
           <section className="attendance-card">
@@ -837,6 +1382,9 @@ function AttendancePage() {
               }}
               placeholder="Example: ABCD1234"
               autoComplete="off"
+              autoCapitalize="characters"
+              autoCorrect="off"
+              spellCheck={false}
             />
 
             <button
@@ -905,38 +1453,7 @@ function AttendancePage() {
                   </>
                 )}
 
-                {cameraOpen && (
-                  <div className="camera-container">
-                    <video
-                      ref={videoRef}
-                      autoPlay
-                      playsInline
-                      muted
-                      className="camera-preview"
-                    />
-
-                    <div className="camera-controls">
-                      <button
-                        className="primary-button capture-button"
-                        onClick={capturePhoto}
-                        disabled={loading}
-                      >
-                        Capture
-                      </button>
-
-                      <button
-                        className="secondary-button"
-                        onClick={() => {
-                          stopCamera();
-                          setCameraMode(null);
-                        }}
-                        disabled={loading}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                )}
+                {cameraOpen && renderCameraPanel("Capture")}
 
                 {photo && (
                   <div className="photo-preview-container">
@@ -1005,38 +1522,9 @@ function AttendancePage() {
                   </>
                 )}
 
-                {cameraOpen && cameraMode === "time_out" && (
-                  <div className="camera-container">
-                    <video
-                      ref={videoRef}
-                      autoPlay
-                      playsInline
-                      muted
-                      className="camera-preview"
-                    />
-
-                    <div className="camera-controls">
-                      <button
-                        className="primary-button capture-button"
-                        onClick={capturePhoto}
-                        disabled={loading}
-                      >
-                        Capture Time Out Selfie
-                      </button>
-
-                      <button
-                        className="secondary-button"
-                        onClick={() => {
-                          stopCamera();
-                          setCameraMode(null);
-                        }}
-                        disabled={loading}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                )}
+                {cameraOpen &&
+                  cameraMode === "time_out" &&
+                  renderCameraPanel("Capture Time Out Selfie")}
 
                 {photo && cameraMode === "time_out" && (
                   <div className="photo-preview-container">
